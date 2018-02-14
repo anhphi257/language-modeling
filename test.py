@@ -11,7 +11,8 @@ def main():
     print trie.count("a")
 
     a = ['a', 'b', 'c']
-    a = ['s'] + a
-    print a
+    print a[:-1]
+    # print 'yes'
+    print a[-1]
 if __name__ == '__main__':
     main()
