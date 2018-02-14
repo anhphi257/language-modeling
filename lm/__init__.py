@@ -48,9 +48,9 @@ class TrigramLM(LanguageModel):
         num_error = 0
         for words in data:
             try:
-                words = np.append([[self.START, 'st']], words, axis=0)
-                words = np.append([[self.START, 'st']], words, axis=0)
-                words = np.append(words, [[self.STOP, 'ed']], axis=0)
+                words = np.append([[LanguageModel.START, 'st']], words, axis=0)
+                words = np.append([[LanguageModel.START, 'st']], words, axis=0)
+                words = np.append(words, [[LanguageModel.STOP, 'ed']], axis=0)
                 for i in range(2, len(words)):
                     self.unigram_counter.add(words[i:i+1, 0])
                     self.bigram_counter.add(words[i-1:i+1, 0])
