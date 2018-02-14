@@ -44,23 +44,22 @@ class TrigramLM(LanguageModel):
         LanguageModel.__init__(self, counter.TRIGRAM, smoothing=smoothing, theta=theta)
         self.vocab = set()
     def train(self, data):
-        def train(self, data):
-            num_success = 0
-            num_error = 0
-            for words in data:
-                try:
-                    words = np.append([[LanguageModel.START, 'st']], words, axis=0)
-                    words = np.append([[LanguageModel.START, 'st']], words, axis=0)
-                    words = np.append(words, [[LanguageModel.STOP, 'ed']], axis=0)
-                    for i in range(2, len(words)):
-                        self.unigram_counter.add(words[i:i + 1, 0])
-                        self.bigram_counter.add(words[i - 1:i + 1, 0])
-                        self.trigram_counter.add(words[i - 2:i + 1, 0])
-                    num_success += 1
-                except:
-                    num_error += 1
-                    continue
-            print("Finish adding ngrams :: {} success :: {} error".format(num_success, num_error))
+        num_success = 0
+        num_error = 0
+        for words in data:
+            try:
+                words = np.append([[self.START, 'st']], words, axis=0)
+                words = np.append([[self.START, 'st']], words, axis=0)
+                words = np.append(words, [[self.STOP, 'ed']], axis=0)
+                for i in range(2, len(words)):
+                    self.unigram_counter.add(words[i:i+1, 0])
+                    self.bigram_counter.add(words[i-1:i+1, 0])
+                    self.trigram_counter.add(words[i-2:i+1, 0])
+                num_success += 1
+            except:
+                num_error += 1
+                continue
+        print("Finish adding ngrams :: {} success :: {} error".format(num_success, num_error))
 
     def logprob(self, sentence):
         ans = 0
@@ -104,7 +103,7 @@ class TrigramLM(LanguageModel):
 
         if len(ngram) == counter.UNIGRAM:
             return self._ml_estimate(ngram)
-        if self._exist(ngram) > 0: 
+        if self._exist(ngram) > 0:
             return self._discounted_prob(ngram)
         #in set B
         else:
