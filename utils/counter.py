@@ -31,6 +31,9 @@ class NGramCounter(Counter):
             if len(words) > 2:
                 key = ' '.join(words[:-1])
                 value = words[-1]
+                if self.adj_words[key] is None:
+                    self.adj_words[key] = set()
+                self.adj_words[key] = value
         else:
             raise TypeError("Only support unigram, bigram, trigram")
 

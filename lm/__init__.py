@@ -91,9 +91,38 @@ class TrigramLM(LanguageModel):
         if len(ngram) == counter.TRIGRAM:
             return self.trigram_counter.count(ngram) - self.theta
 
-    def _backoff_weight(self, ngram):
-        pass
+    #TODO: implement _set_A and _set_B
+    def _set_A(self, ngram):
+        words = set()
 
+        return words
+    def _set_B(self, ngram):
+        words = set()
+        return words
+
+
+    def _backoff_weight(self, ngram):
+
+        set_a = self._set_A(ngram)
+        set_b = self._set_B(ngram)
+        # ngram = [w_(j-2), w_(j-1)]
+        if len(ngram) == 2:
+            alpha = 1
+            for w in set_a:
+                alpha -= (self._discounted_prob(ngram + [w]) /  self.bigram_counter.count(ngram))
+            beta = 0
+            for w in set_b:
+                beta += self._katz_backoff_prob([ngram[1], w])
+            return alpha / beta
+        # ngram = [w_(j-1)]
+        if len(ngram) == 1:
+            alpha = 1
+            for w in set_a:
+                alpha -= self._discounted_prob(ngram + [w]) / self.unigram_counter.count(ngram)
+            beta = 0
+            for w in set_b:
+                beta += self._ml_estimate([w])
+        pass
     def _katz_backoff_prob(self, ngram):
         '''
             calculated Katz backoff
