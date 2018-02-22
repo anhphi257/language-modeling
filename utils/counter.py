@@ -39,5 +39,6 @@ class NGramCounter(Counter):
 
     def total(self):
         return self.counter.total()
+
     def ngram_with_prefix(self, ngram):
         return self.counter.start_with_prefix(' '.join(ngram))

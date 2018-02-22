@@ -43,6 +43,7 @@ class TrigramLM(LanguageModel):
     def __init__(self, smoothing='katz', theta=0.1):
         LanguageModel.__init__(self, counter.TRIGRAM, smoothing=smoothing, theta=theta)
         self.vocab = set()
+
     def train(self, data):
         num_success = 0
         num_error = 0
@@ -52,9 +53,9 @@ class TrigramLM(LanguageModel):
                 words = np.append([[LanguageModel.START, 'st']], words, axis=0)
                 words = np.append(words, [[LanguageModel.STOP, 'ed']], axis=0)
                 for i in range(2, len(words)):
-                    self.unigram_counter.add(words[i:i+1, 0])
-                    self.bigram_counter.add(words[i-1:i+1, 0])
-                    self.trigram_counter.add(words[i-2:i+1, 0])
+                    self.unigram_counter.add(words[i:i + 1, 0])
+                    self.bigram_counter.add(words[i - 1:i + 1, 0])
+                    self.trigram_counter.add(words[i - 2:i + 1, 0])
                 num_success += 1
             except:
                 num_error += 1
@@ -69,8 +70,6 @@ class TrigramLM(LanguageModel):
 
     def _logprob(self, param, param1):
         pass
-
-
 
     def _missing_prob_mass(self, ngram):
         # return self._discounted_prob(ngram) * 1.0 / self.bigram_counter.count(ngram[:-1])
@@ -99,13 +98,13 @@ class TrigramLM(LanguageModel):
         '''
             calculated Katz backoff
         '''
-        #in set A
+        # in set A
 
         if len(ngram) == counter.UNIGRAM:
             return self._ml_estimate(ngram)
         if self._exist(ngram) > 0:
             return self._discounted_prob(ngram)
-        #in set B
+        # in set B
         else:
             return self._backoff_weight(ngram[:-1]) * self._katz_backoff_prob(ngram[1:])
 
@@ -119,6 +118,7 @@ class TrigramLM(LanguageModel):
             return self.bigram_counter.count(ngram) * 1.0 / self.unigram_counter.count(ngram[:-1])
         if len(ngram) == counter.TRIGRAM:
             return self.trigram_counter.count(ngram) * 1.0 / self.bigram_counter.count(ngram[:-1])
+
     def _add(self, ngram):
         if len(ngram) == 1:
             self.vocab.add(ngram[0])
@@ -127,6 +127,7 @@ class TrigramLM(LanguageModel):
             self.bigram_counter.add(ngram)
         if len(ngram) == 3:
             self.trigram_counter.add(ngram)
+
     def _exist(self, ngram):
         full_counter = None
         if len(ngram) == counter.UNIGRAM:

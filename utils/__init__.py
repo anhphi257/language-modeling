@@ -5,6 +5,7 @@ import logging
 
 logging.getLogger().setLevel(logging.INFO)
 
+
 class Node:
     def __init__(self, label=None, freq=None, data=None):
         self.label = label
@@ -160,9 +161,11 @@ class DataLoader(object):
 
                 if self.count is not None and self.num_sentences == self.count:
                     break
-        logging.info("Load total {} files :: {} sentences :: {} words".format(self.num_files, self.num_sentences, self.num_words))
+        logging.info("Load total {} files :: {} sentences :: {} words".format(self.num_files, self.num_sentences,
+                                                                              self.num_words))
         self.sentences = np.squeeze(self.sentences)
         return self.sentences
+
 
 if __name__ == '__main__':
     data_loader = DataLoader()
