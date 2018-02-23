@@ -1,6 +1,9 @@
 from utils import Trie
-import numpy as np
+import utils
 
+import logging
+
+logging.getLogger().setLevel(logging.INFO)
 UNIGRAM = 1
 BIGRAM = 2
 TRIGRAM = 3
@@ -21,24 +24,21 @@ class NGramCounter(Counter):
         if type in [UNIGRAM, BIGRAM, TRIGRAM]:
             self.mode = type
             self.counter = Trie()
-            self.adj_words = dict()
         else:
             raise TypeError("Only support unigram, bigram, trigram")
 
     def add(self, words):
+        # logging.info("add {}".format(words))
         if len(words) in [UNIGRAM, BIGRAM, TRIGRAM]:
-            self.counter.add(' '.join(words))
-            if len(words) > 2:
-                key = ' '.join(words[:-1])
-                value = words[-1]
-                if self.adj_words[key] is None:
-                    self.adj_words[key] = set()
-                self.adj_words[key] = value
+            self.counter.add(utils.merge(words))
+
         else:
             raise TypeError("Only support unigram, bigram, trigram")
 
     def count(self, words):
-        return self.counter.count(' '.join(words))
+        ans = self.counter.count(utils.merge(words))
+        # logging.info("counting: {} : {}".format(' '.join(words), ans))
+        return ans
 
     def total(self):
         return self.counter.total()

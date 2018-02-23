@@ -32,6 +32,7 @@ class Trie:
         return self.head.children[key]
 
     def add(self, word):
+        # print word
         self.sum += 1
         current_node = self.head
         word_finished = True
@@ -166,6 +167,8 @@ class DataLoader(object):
         self.sentences = np.squeeze(self.sentences)
         return self.sentences
 
+def merge(ngram):
+    return ' '.join(ngram)
 
 if __name__ == '__main__':
     data_loader = DataLoader()
