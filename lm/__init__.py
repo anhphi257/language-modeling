@@ -4,7 +4,7 @@ from utils import counter
 import utils
 import numpy as np
 import logging
-
+import time
 logging.getLogger().setLevel(logging.INFO)
 
 
@@ -83,7 +83,7 @@ class TrigramLM(LanguageModel):
         num_error = 0
         for words in data:
             try:
-                print words
+                # print words
                 # words = np.append([[LanguageModel.START, 'st']], words, axis=0)
                 words = np.append([[LanguageModel.START, 'st']], words, axis=0)
                 # words = np.append(words, [[LanguageModel.STOP, 'ed']], axis=0)
@@ -107,13 +107,17 @@ class TrigramLM(LanguageModel):
         sentence = '{} {} {}'.format(LanguageModel.START, sentence, LanguageModel.STOP).split()
         ans = 0
         for i in range(2, len(sentence)):
+            start_time = time.time()
             prob = self._katz_backoff_prob(sentence[i - 2:i + 1])
-            logging.info("{} : {}".format(sentence[i - 2:i + 1], prob))
+            end_time = time.time()
+            logging.info("{} : {} in {}s".format(sentence[i - 2:i + 1], prob, end_time - start_time))
+
             ans += np.log(prob)
         return ans
 
     def evaluate(self, data):
         ans = 0
+
         for sentence in data:
             ans += self.logprob(sentence)
         return ans
@@ -135,17 +139,17 @@ class TrigramLM(LanguageModel):
     def _set_B(self, ngram):
         return self.vocab.difference(self._set_A(ngram))
 
-    def _katz_backoff_prob(self, ngram, mle = False):
-        # logging.info("Calculate backoff of \'{}\'".format(' '.join(ngram)))
+    def _katz_backoff_prob(self, ngram, mle=False):
         '''
             calculated Katz backoff
         '''
+        # logging.info("Calculate backoff of \'{}\'".format(' '.join(ngram)))
 
         if len(ngram) == 1:
-            if mle:
-                return self._ml_estimate(ngram)
-            else:
-                return self._discounted_prob(ngram)
+            # if mle:
+            return self._ml_estimate(ngram)
+            # else:
+            #     return self._discounted_prob(ngram)
         if self._exist(ngram) > 0:
             # print  self._discounted_prob(ngram)
             return self._discounted_prob(ngram)
