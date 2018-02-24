@@ -5,6 +5,7 @@ import utils
 import numpy as np
 import logging
 import time
+import pickle
 logging.getLogger().setLevel(logging.INFO)
 
 
@@ -78,17 +79,18 @@ class TrigramLM(LanguageModel):
             full_counter = self.trigram_counter
         return full_counter.count(ngram) > 0
 
-    def train(self, data):
+    def train(self, path):
+        f = open(path, 'rb')
         num_success = 0
         num_error = 0
-        for words in data:
+        while True:
             try:
-                # print words
-                # words = np.append([[LanguageModel.START, 'st']], words, axis=0)
+                words = pickle.load(f)
+            except EOFError:
+                break
+            try:
                 words = np.append([[LanguageModel.START, 'st']], words, axis=0)
-                # words = np.append(words, [[LanguageModel.STOP, 'ed']], axis=0)
                 words = np.append(words, [[LanguageModel.STOP, 'ed']], axis=0)
-                # print words
 
                 for i in range(0, len(words)):
 
@@ -98,8 +100,10 @@ class TrigramLM(LanguageModel):
                     if i < len(words) - 2:
                         self._add(words[i:i + 3, 0])
                 num_success += 1
+                del words
             except:
                 num_error += 1
+                del words
                 continue
         print("Finish adding ngrams :: {} success :: {} error".format(num_success, num_error))
 
