@@ -25,12 +25,12 @@ def readData(count = 1000):
     f_test.close()
 
 if __name__ == '__main__':
-    readData(1000)
+    readData(None)
     trigram_lm = TrigramLM()
     trigram_lm.train('data/train.pkl')
 
     # logging.info("vocab_size: {}".format(len(trigram_lm.vocab)))
     # print trigram_lm.unigram_counter.count([])
     # print trigram_lm.vocab
-    print trigram_lm.logprob('who is butcher')
+    # print trigram_lm.logprob('who is butcher')
     # print trigram_lm.logprob('c a b')
