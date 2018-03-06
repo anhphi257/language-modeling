@@ -25,7 +25,7 @@ def readData(count = 1000):
     f_test.close()
 
 if __name__ == '__main__':
-    readData(None)
+    readData(1000)
     trigram_lm = TrigramLM()
     trigram_lm.train('data/train.pkl')
 

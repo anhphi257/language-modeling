@@ -95,6 +95,7 @@ class TrigramLM(LanguageModel):
         self._train_unigram()
         self._train_bigram()
         self._train_trigram()
+        self._train_save_arpa()
 
     def _train_add_gram(self, path):
         start_time = time.time()
@@ -107,11 +108,10 @@ class TrigramLM(LanguageModel):
             except EOFError:
                 break
             try:
-                words = np.append([[LanguageModel.START, 'st']], words, axis=0)
-                words = np.append([[LanguageModel.START, 'st']], words, axis=0)
+                words = np.append([[LanguageModel.START, 'st'],[LanguageModel.START, 'st']], words, axis=0)
                 words = np.append(words, [[LanguageModel.STOP, 'ed']], axis=0)
-
                 for i in range(1, len(words)):
+                    # print("{} {} {}".format(words[i:i+1, 0], words[i-1:i+1, 0], words[i-2:i+1, 0]))
                     self._add(words[i:i+1, 0])
                     self._add(words[i-1:i+1, 0])
                     if i-2 >= 0:
@@ -124,6 +124,7 @@ class TrigramLM(LanguageModel):
                 continue
         elapsed_time = time.time() - start_time
         logging.info("Finish adding ngrams :: {} success :: {} error :: took {}s".format(num_success, num_error, elapsed_time))
+        logging.info("{} 1-gram :: {} 2-grams :: {} 3-grams".format(len(self.unigram_vocab), len(self.bigram_vocab), len(self.trigram_vocab)))
 
     def _train_unigram(self):
         start_time = time.time()
@@ -131,19 +132,23 @@ class TrigramLM(LanguageModel):
         num_error = 0
         for word in self.unigram_vocab:
             try:
-                self.unigram_arpa[word] = [None, None]
-                self.unigram_arpa[word][self.PROB] = self._ml_estimate([word])
+                self.unigram_arpa[word] = [10.0**-99, None]
+                if word != LanguageModel.START:
+                    self.unigram_arpa[word][self.PROB] = self._ml_estimate([word])
                 count_word = self.unigram_counter.count([word])
-                bow_top = 1.0 * count_word
-                bow_bottom = 0.0
-                for word2 in self.unigram_vocab:
-                    count_word_word2 = self.bigram_counter.count([word, word2])
-                    if count_word_word2 > 0:
-                        bow_top -= self._discount(count_word_word2)
-                    else:
-                        bow_bottom += self._ml_estimate([word2])
-                bow_top /= count_word
-                self.unigram_arpa[word][self.BOW] = bow_top / bow_bottom
+                if word != LanguageModel.STOP:
+                    bow_top = 0.0
+                    bow_bottom = 0.0
+                    for word2 in self.unigram_vocab:
+                        if word2 == LanguageModel.START:
+                            continue
+                        count_word_word2 = self.bigram_counter.count([word, word2])
+                        if count_word_word2 > 0:
+                            bow_top += self._discount(count_word_word2)
+                        else:
+                            bow_bottom += self._ml_estimate([word2])
+                    bow_top = 1.0 - bow_top / count_word
+                    self.unigram_arpa[word][self.BOW] = bow_top / bow_bottom
                 num_success += 1
             except:
                 num_error += 1
@@ -159,26 +164,30 @@ class TrigramLM(LanguageModel):
                 bigram = sentence.strip().split()
                 word = bigram[0]
                 word2 = bigram[1]
+                if word == LanguageModel.START and word2 == LanguageModel.START:
+                    continue
                 self.bigram_arpa[sentence] = [None, None]
                 count_word_word2 = self.bigram_counter.count(bigram)
                 if count_word_word2 > 0:
                     self.bigram_arpa[sentence][self.PROB] = self._discounted_prob(bigram)
                 else:
                     self.bigram_arpa[sentence][self.PROB] = self.unigram_arpa[word][self.BOW]*self._ml_estimate([word2])
-                bow_top = 1.0 * count_word_word2
-                bow_bottom = 0.0
-                for word3 in self.unigram_vocab:
-                    count_word_word2_word3 = self.trigram_counter.count([word, word2, word3])
-                    if count_word_word2_word3 > 0:
-                        bow_top -= self._discount(count_word_word2_word3)
-                    else:
-                        count_word2_word3 = self.bigram_counter.count([word2, word3])
-                        if count_word2_word3 > 0:
-                            bow_bottom += self._discounted_prob([word2, word3])
+                if word2 != LanguageModel.STOP:
+                    bow_top = 0.0
+                    bow_bottom = 0.0
+                    for word3 in self.unigram_vocab:
+                        count_word_word2_word3 = self.trigram_counter.count([word, word2, word3])
+                        if count_word_word2_word3 > 0:
+                            bow_top += self._discount(count_word_word2_word3)
                         else:
-                            bow_bottom += self.unigram_arpa[word2][self.BOW] * self.unigram_arpa[word3][self.PROB]
-                bow_top /= count_word_word2
-                self.bigram_arpa[sentence][self.BOW] = bow_top / bow_bottom
+                            count_word2_word3 = self.bigram_counter.count([word2, word3])
+                            if count_word2_word3 > 0:
+                                bow_bottom += self._discounted_prob([word2, word3])
+                            else:
+                                bow_bottom += self.unigram_arpa[word2][self.BOW] * self.unigram_arpa[word3][self.PROB]
+                    bow_top = 1.0 - bow_top / count_word_word2
+                    if np.abs(bow_top-bow_bottom) > 0.000001:
+                        self.bigram_arpa[sentence][self.BOW] = bow_top / bow_bottom
                 num_success += 1
             except:
                 num_error += 1
@@ -211,6 +220,40 @@ class TrigramLM(LanguageModel):
                 num_error += 1
         elapsed_time = time.time() - start_time
         logging.info("Finish calculating 3-gram :: {} success :: {} error :: took {}s".format(num_success, num_error, elapsed_time))
+
+    def _train_save_arpa(self, path='data/lm.arpa'):
+        start_time = time.time()
+        with open(path, 'w') as f:
+            f.write('\\data\\\n')
+            f.write('ngram 1={}\n'.format(len(self.unigram_arpa)))
+            f.write('ngram 2={}\n'.format(len(self.bigram_arpa)))
+            f.write('ngram 3={}\n'.format(len(self.trigram_arpa)))
+            f.write('\n')
+            f.write('\\1-grams:\n')
+            for word,info in sorted(self.unigram_arpa.items()):
+                if info[self.BOW] is None:
+                    f.write("{:.5f}\t{}\n".format(np.log10(info[self.PROB]), word))
+                else:
+                    f.write("{:.5f}\t{}\t{:.5f}\n".format(np.log10(info[self.PROB]), word, np.log10(info[self.BOW])))
+            f.write('\n')
+            f.write('\\2-grams:\n')
+            for word,info in sorted(self.bigram_arpa.items()):
+                if info[self.PROB] is not None:
+                    if info[self.BOW] is None:
+                        f.write("{:.5f}\t{}\n".format(np.log10(info[self.PROB]), word))
+                    else:
+                        f.write("{:.5f}\t{}\t{:.5f}\n".format(np.log10(info[self.PROB]), word, np.log10(info[self.BOW])))
+            f.write('\n')
+            f.write('\\3-grams:\n')
+            for word,info in sorted(self.trigram_arpa.items()):
+                if info[self.PROB] is not None:
+                    f.write("{:.5f}\t{}\n".format(np.log10(info[self.PROB]), word))
+            f.write('\n')
+            f.write('\\end\\\n')
+            f.close()
+        elapsed_time = time.time() - start_time
+        logging.info("Finish saving lm: {}".format(path))
+
 
     def logprob(self, sentence):
         sentence = '{} {} {}'.format(LanguageModel.START, sentence, LanguageModel.STOP).split()

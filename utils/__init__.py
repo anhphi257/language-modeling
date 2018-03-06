@@ -154,7 +154,13 @@ class DataLoader(object):
                         for line in f.readlines():
                             tokens = line.lower().strip().split()
                             if len(tokens) > 0:
-                                self.sentences.append(np.array([np.array(token.split('/')) for token in tokens]))
+                                arr = np.empty(shape=(0,2))
+                                for token in tokens:
+                                    tmp = token.split('/')
+                                    if tmp[0] != tmp[1]:
+                                        arr = np.append(arr, np.array(tmp).reshape(1,2), axis=0)
+
+                                self.sentences.append(arr)
                                 self.num_sentences += 1
                                 self.num_words += len(self.sentences[-1])
                                 if self.count is not None and self.num_sentences == self.count:
